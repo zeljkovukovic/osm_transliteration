@@ -1,9 +1,7 @@
-__author__ = 'Zeljko'
+__author__ = 'Zeljko Vukovic zeljkov@uns.ac.rs'
 
 from osmapi import OsmApi
-from tabulate import tabulate
 import sys
-import getpass
 
 cyr_to_lat = {
     'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E',
