@@ -137,7 +137,7 @@ if __name__ == "__main__":
     api = OsmApi(username=user, password=passwrd)
 
     print('Downloading...')
-    box = api.Map(19.978123,45.273014,20.010052,45.286905)
+    box = api.Map(20.074253,45.259905,20.107899,45.284972)
     print('Done.')
 
     cyr_num = 0
@@ -165,7 +165,11 @@ if __name__ == "__main__":
 
     print("Number of nodes with cyrilic names: ", cyr_num)
     print("Missing latin: ",  len(missing_lat))
+    if len(missing_lat) > 0:
+        print(missing_lat)
     print("Missing accent-insensitive latin: ", len(missing_lat_ai))
+    if len(missing_lat_ai) > 0:
+        print(missing_lat_ai)
 
     changeset(missing_lat, cyr_to_lat, u"name:sr-Latn", u"name:sr-Latin-translit_bot", "latin")
     changeset(missing_lat_ai, cyr_to_lat_ai, u"name:sr-Latn-ai", u"name:sr-Latin-ai-translit_bot", "latin case insensitive")
