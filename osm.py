@@ -3,6 +3,9 @@ __author__ = 'Zeljko Vukovic zeljkov@uns.ac.rs'
 from osmapi import OsmApi
 import sys
 
+TAG_NAME_SERBIAN_LATIN = u"name:sr-Latn"
+TAG_NAME_SERBIAN_CYRILIC = u"name:sr"
+
 cyr_to_lat = {
     'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E',
     'Ж': 'Ž', 'З': 'Z', 'И': 'I', 'Ј': 'J', 'К': 'K', 'Л': 'L',
@@ -96,11 +99,11 @@ def query_yes_no(question, default="yes"):
                              "(or 'y' or 'n').\n")
 
 
-def changeset(nodes_to_fix, conversion, first_tag_choice, second_tag_choice, name):
+def changeset(nodes_to_fix, conversion, tag_name, name):
     if len(nodes_to_fix) == 0:
         return
 
-    question = "Make " + name + " changeset?"
+    question = "Make '" + name + "' changeset?"
     if not query_yes_no(question, "no"):
         return
 
@@ -115,10 +118,6 @@ def changeset(nodes_to_fix, conversion, first_tag_choice, second_tag_choice, nam
         cir_tag = get_cyrilic_tag(tags)
         in_cyrilic = tags[cir_tag]
 
-        # try not to overwrite existing tags
-        tag_name = first_tag_choice
-        if tag_name in tags.keys():
-            tag_name = second_tag_choice
 
         node['data']['tag'][tag_name] = convert(in_cyrilic, conversion)
         results.append(api.WayUpdate(node['data']))
@@ -126,6 +125,12 @@ def changeset(nodes_to_fix, conversion, first_tag_choice, second_tag_choice, nam
     print("Closing...")
     api.ChangesetClose()
     print("Done.")
+
+
+def print_result(result, result_name):
+    print(result_name, ": ",  len(result))
+    if len(result) > 0:
+        print(result)
 
 
 ###################################
@@ -136,14 +141,15 @@ if __name__ == "__main__":
     passwrd = input("Password: ")
     api = OsmApi(username=user, password=passwrd)
 
+
     print('Downloading...')
-    box = api.Map(20.074253,45.259905,20.107899,45.284972)
+    box = api.Map(19.955807,45.385807,20.012455,45.421212)
     print('Done.')
 
     cyr_num = 0
     i = 0
     missing_lat = []
-    missing_lat_ai = []
+    wrong_latin = []
 
     for node in box:
         if node['type'] == 'way':
@@ -155,21 +161,17 @@ if __name__ == "__main__":
 
                 in_cyrilic = tags[cir_tag]
                 in_latin = convert(in_cyrilic, cyr_to_lat)
-                in_latin_ai = convert(in_cyrilic, cyr_to_lat_ai)
 
                 if in_latin not in tags.values():
-                    missing_lat.append(node)
-
-                if in_latin_ai not in tags.values():
-                    missing_lat_ai.append(node)
+                    if TAG_NAME_SERBIAN_LATIN in tags:
+                        wrong_latin.append(node)
+                    else:
+                        missing_lat.append(node)
 
     print("Number of nodes with cyrilic names: ", cyr_num)
-    print("Missing latin: ",  len(missing_lat))
-    if len(missing_lat) > 0:
-        print(missing_lat)
-    print("Missing accent-insensitive latin: ", len(missing_lat_ai))
-    if len(missing_lat_ai) > 0:
-        print(missing_lat_ai)
+    print("")
+    print_result(missing_lat, 'Missing latin')
+    print_result(wrong_latin, 'Incorrect latin')
 
-    changeset(missing_lat, cyr_to_lat, u"name:sr-Latn", u"name:sr-Latin-translit_bot", "latin")
-    changeset(missing_lat_ai, cyr_to_lat_ai, u"name:sr-Latn-ai", u"name:sr-Latin-ai-translit_bot", "latin case insensitive")
+    changeset(missing_lat, cyr_to_lat, TAG_NAME_SERBIAN_LATIN, "latin")
+    changeset(wrong_latin, cyr_to_lat, TAG_NAME_SERBIAN_LATIN, "incorrect latin")
